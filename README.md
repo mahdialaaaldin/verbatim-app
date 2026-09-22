@@ -1,59 +1,53 @@
-# Verbatim Studio - Android App
+# Verbatim Studio - 100% Pure Native Android App
 
-**Verbatim** is a premium AI-powered text editor Android application supporting **Android 11 and above** (API level 30+).
+**Verbatim** is a premium AI-powered text editor built **100% natively for Android** using **Jetpack Compose**, **Material 3**, and **Kotlin Coroutines**. It supports **Android 11 and above** (API level 30+).
+
+## Tech Stack & Architecture
+
+- **100% Pure Native Jetpack Compose**: Zero WebViews, Zero HTML, Zero CSS/JS.
+- **Material 3 Design**: Fully native UI components (Cards, BottomSheet, FilterChips, OutlinedTextField, Buttons, Dialogs).
+- **Kotlin Coroutines**: Asynchronous Google Gemini API network calls.
+- **OkHttp 4**: High-performance HTTP client with connection pooling, retries, and multi-model fallback.
+- **Android Text-to-Speech (`TextToSpeech`)**: Native system voice playback.
+- **Android `ClipboardManager` & Haptics**: Native copy/paste with tactile feedback.
+- **Longest Common Subsequence (LCS) Diff**: Native Compose `AnnotatedString` with word-by-word highlighted insertions and deletions.
+- **Minimum SDK**: **Android 11 (API 30)**
+- **Target SDK**: **Android 15 (API 35)**
 
 ## Features
 
-- **Built-in & Custom AI Presets**:
-  - *Correct & Polish*: Fixes typos, spelling, and grammar.
-  - *Professional*: Elevates tone to formal, persuasive, and authoritative.
-  - *Conversational*: Transforms text into friendly, natural speech.
-  - *Summarize*: Condenses content into 1-2 core sentences.
-  - *Bullet Points*: Extracts structured key takeaways.
-  - *Expand*: Elaborates with rich descriptive clarity.
-  - *Sarcastic*: Adds sharp wit, dry humor, and satire.
-  - *Prompt Architect*: Engineers optimized LLM prompts.
-  - *Custom Presets*: Create, edit, reorder, and persist personalized system prompt workflows.
+- **8 Built-in AI Presets**:
+  - *Correct & Polish*: Spelling, grammar, and typography improvements.
+  - *Professional*: Formal, persuasive, and authoritative tone.
+  - *Conversational*: Friendly, natural, and relaxed style.
+  - *Summarize*: Crisp 1-2 sentence core message.
+  - *Bullet Points*: Structured takeaways.
+  - *Expand*: Rich descriptive detail and depth.
+  - *Sarcastic*: Sharp wit, dry humor, and satire.
+  - *Prompt Architect*: LLM prompt optimization.
+- **Custom Presets Manager**: Create, edit, reorder (up/down), and delete personalized system prompts.
 - **Dual Workspace**:
-  - Responsive mobile tab switcher (Input Text ↔ Output).
-  - Side-by-side view on tablets and larger screens.
-- **Visual Diff Inspector**:
-  - Longest Common Subsequence (LCS) word-by-word diff engine highlighting additions (`ins`) and deletions (`del`).
-- **Native Android Integration**:
-  - Android `TextToSpeech` engine with live playback status.
-  - Native `ClipboardManager` with haptic feedback.
-  - Edge-to-edge system bars (status & navigation bar theme synchronization).
-  - Storage Access Framework & `FileProvider` for JSON settings backup and restore.
-  - Hardware back button handling for closing dialogs and drawers gracefully.
-- **Privacy & History Control**:
-  - Revision history logging (up to 25 entries).
-  - One-tap Incognito Mode.
-  - Configurable auto-delete retention periods (1 Day, 3 Days, 1 Week, 1 Month, Custom, Never).
-- **Google Gemini Engine**:
-  - Supports Gemini Flash Lite, Flash, and Pro models (`gemini-3.5-flash-lite`, `gemini-3.6-flash`, etc.).
-  - Automatic multi-model fallback chain and retry logic on rate limits.
-  - In-app API connection tester.
+  - Responsive animated sliding tabs (Input Text ↔ Output) for phones.
+  - Two-pane side-by-side view for tablets and landscape.
+- **Live Text Metrics**:
+  - Live character count, word count, estimated reading time, and readability complexity rating.
+- **Revision History**:
+  - Material 3 `ModalBottomSheet` with restore, copy original, copy enhanced, and deletion.
+  - One-tap Incognito mode and configurable auto-delete retention periods.
+- **Settings & Privacy**:
+  - Google Gemini API key entry, model selection (Flash Lite, Flash, Pro), connection test ping, export/import settings JSON.
 
-## Requirements
+## How to Build & Run
 
-- Android Studio Jellyfish (2023.3.1) or newer / Ladybug / Koala
-- JDK 17
-- Minimum SDK: **Android 11 (API 30)**
-- Target SDK: **Android 15 (API 35)**
-
-## Opening & Building in Android Studio
-
+### In Android Studio
 1. Open Android Studio.
-2. Select **File > Open...** and navigate to this folder:
-   ```
-   c:\Users\mahdi.alaaaldin\OneDrive - Montyholding\Documents\App
-   ```
-3. Let Gradle sync project dependencies.
-4. Click **Run > Run 'app'** or use an Android 11+ emulator or physical device.
+2. Select **File > Open...** and choose this project folder.
+3. Allow Gradle to sync.
+4. Click **Run 'app'** or build via **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
 
-To build an APK via command line:
+### Via Command Line
 ```bash
 ./gradlew assembleDebug
 ```
-The output APK will be located at:
+Output APK will be generated at:
 `app/build/outputs/apk/debug/app-debug.apk`

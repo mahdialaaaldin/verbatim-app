@@ -1,4 +1,8 @@
-# Add project specific ProGuard rules here.
--keepclassmembers class com.verbatim.studio.VerbatimNativeBridge {
-    @android.webkit.JavascriptInterface <methods>;
+# Project ProGuard Rules for Jetpack Compose & Gson
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
 }
+-keep class com.verbatim.studio.model.** { *; }

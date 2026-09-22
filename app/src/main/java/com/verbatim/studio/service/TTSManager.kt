@@ -1,44 +1,39 @@
-package com.verbatim.studio
+package com.verbatim.studio.service
 
 import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.util.Log
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 
-class TTSManager(
-    context: Context,
-    private val onStateChanged: ((Boolean) -> Unit)? = null
-) : TextToSpeech.OnInitListener {
+class TTSManager(context: Context) : TextToSpeech.OnInitListener {
 
-    private val tag = "TTSManager"
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
     private var isInitialized = false
-    private var isCurrentlySpeaking = false
+
+    private val _isSpeaking = MutableStateFlow(false)
+    val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
 
     init {
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
-                isCurrentlySpeaking = true
-                onStateChanged?.invoke(true)
+                _isSpeaking.value = true
             }
 
             override fun onDone(utteranceId: String?) {
-                isCurrentlySpeaking = false
-                onStateChanged?.invoke(false)
+                _isSpeaking.value = false
             }
 
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
-                isCurrentlySpeaking = false
-                onStateChanged?.invoke(false)
+                _isSpeaking.value = false
             }
 
             override fun onError(utteranceId: String?, errorCode: Int) {
-                Log.e(tag, "TTS error: $errorCode for utteranceId: $utteranceId")
-                isCurrentlySpeaking = false
-                onStateChanged?.invoke(false)
+                _isSpeaking.value = false
             }
         })
     }
@@ -50,8 +45,6 @@ class TTSManager(
                 tts?.setLanguage(Locale.US)
             }
             isInitialized = true
-        } else {
-            Log.e(tag, "TTS Initialization failed with status: $status")
         }
     }
 
@@ -61,18 +54,22 @@ class TTSManager(
         val params = Bundle()
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "verbatim_speech_${System.currentTimeMillis()}")
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "verbatim_speech")
+        _isSpeaking.value = true
     }
 
     fun stop() {
         if (tts?.isSpeaking == true) {
             tts?.stop()
         }
-        isCurrentlySpeaking = false
-        onStateChanged?.invoke(false)
+        _isSpeaking.value = false
     }
 
-    fun isSpeaking(): Boolean {
-        return isCurrentlySpeaking || (tts?.isSpeaking == true)
+    fun toggleSpeak(text: String) {
+        if (_isSpeaking.value) {
+            stop()
+        } else {
+            speak(text)
+        }
     }
 
     fun shutdown() {
@@ -80,6 +77,6 @@ class TTSManager(
         tts?.shutdown()
         tts = null
         isInitialized = false
-        isCurrentlySpeaking = false
+        _isSpeaking.value = false
     }
 }
