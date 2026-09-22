@@ -263,44 +263,44 @@ fun OutputPanel(
                         .padding(16.dp)
                 ) {
                     if (!hasValidOutput) {
-                        // Polished Empty State
+                        // Polished Empty State (Optimized for split view and compact phones)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 36.dp, horizontal = 12.dp),
+                                .padding(vertical = 16.dp, horizontal = 12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .background(IndigoPrimary.copy(alpha = 0.08f))
-                                    .border(1.dp, IndigoPrimary.copy(alpha = 0.15f), RoundedCornerShape(16.dp)),
+                                    .border(1.dp, IndigoPrimary.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = null,
                                     tint = IndigoPrimary,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
 
                             Text(
                                 text = "Ready to Transform",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
                             )
 
                             Text(
                                 text = "Type or paste your text in the input panel, then choose any preset above to polish, rewrite, summarize, or expand.",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
                                 color = if (isDarkTheme) TextMutedDark else TextMutedLight,
-                                modifier = Modifier.fillMaxWidth(0.85f),
-                                lineHeight = 19.sp
+                                modifier = Modifier.fillMaxWidth(0.9f),
+                                lineHeight = 17.sp
                             )
                         }
                     } else if (showDiff && rawInputText.isNotBlank()) {
