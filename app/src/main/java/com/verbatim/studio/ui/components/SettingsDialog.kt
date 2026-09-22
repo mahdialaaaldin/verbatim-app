@@ -1,5 +1,7 @@
 package com.verbatim.studio.ui.components
 
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -46,6 +49,9 @@ fun SettingsDialog(
     onImportSettings: () -> Unit,
     onResetDefaults: (clearHistory: Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboard = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
+
     var apiKey by remember { mutableStateOf(initialSettings.geminiApiKey) }
     var showApiKey by remember { mutableStateOf(false) }
     var selectedModel by remember { mutableStateOf(initialSettings.geminiModel) }
@@ -147,12 +153,37 @@ fun SettingsDialog(
                             placeholder = { Text("Paste gemini api key...", fontSize = 13.sp) },
                             visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
-                                IconButton(onClick = { showApiKey = !showApiKey }) {
-                                    Icon(
-                                        imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = null,
-                                        tint = if (isDarkTheme) TextMutedDark else TextMutedLight
-                                    )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(end = 4.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            val clip = clipboard.primaryClip
+                                            if (clip != null && clip.itemCount > 0) {
+                                                apiKey = clip.getItemAt(0).coerceToText(context).toString().trim()
+                                            }
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ContentPaste,
+                                            contentDescription = "Paste API Key",
+                                            tint = if (isDarkTheme) TextMutedDark else TextMutedLight,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { showApiKey = !showApiKey },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = null,
+                                            tint = if (isDarkTheme) TextMutedDark else TextMutedLight,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                             },
                             singleLine = true,

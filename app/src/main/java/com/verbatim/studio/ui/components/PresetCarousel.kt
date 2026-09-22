@@ -1,5 +1,6 @@
 package com.verbatim.studio.ui.components
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,10 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +37,8 @@ fun PresetCarousel(
     builtInPresets: List<Preset>,
     customPresets: List<Preset>,
     isDarkTheme: Boolean,
+    activePresetName: String? = null,
+    isLoading: Boolean = false,
     onSelectPreset: (Preset) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -55,16 +60,17 @@ fun PresetCarousel(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Tune,
+                    imageVector = Icons.Default.AutoFixHigh,
                     contentDescription = null,
                     tint = IndigoPrimary,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text = "ACTION PRESETS",
+                    text = "MAGIC PRESETS",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isDarkTheme) TextMutedDark else TextMutedLight,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.6.sp
                 )
             }
 
@@ -119,13 +125,15 @@ fun PresetCarousel(
         LazyRow(
             state = listState,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             items(allPresets, key = { it.id }) { preset ->
+                val isActive = activePresetName == preset.name && isLoading
                 PresetChip(
                     preset = preset,
                     isDarkTheme = isDarkTheme,
+                    isActive = isActive,
                     onClick = { onSelectPreset(preset) }
                 )
             }
@@ -137,21 +145,28 @@ fun PresetCarousel(
 private fun PresetChip(
     preset: Preset,
     isDarkTheme: Boolean,
+    isActive: Boolean,
     onClick: () -> Unit
 ) {
-    val bg = if (preset.isCustom) {
-        if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.12f) else FuchsiaAccent.copy(alpha = 0.08f)
+    val bg = if (isActive) {
+        IndigoPrimary.copy(alpha = 0.25f)
+    } else if (preset.isCustom) {
+        if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.15f) else FuchsiaAccent.copy(alpha = 0.1f)
     } else {
         if (isDarkTheme) preset.darkBg else preset.lightBg
     }
 
-    val border = if (preset.isCustom) {
-        if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.35f) else FuchsiaAccent.copy(alpha = 0.25f)
+    val border = if (isActive) {
+        IndigoPrimary
+    } else if (preset.isCustom) {
+        if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.4f) else FuchsiaAccent.copy(alpha = 0.3f)
     } else {
         if (isDarkTheme) preset.darkBorder else preset.lightBorder
     }
 
-    val textColor = if (preset.isCustom) {
+    val textColor = if (isActive) {
+        IndigoPrimary
+    } else if (preset.isCustom) {
         if (isDarkTheme) FuchsiaAccent else FuchsiaDark
     } else {
         preset.textColor
@@ -159,24 +174,32 @@ private fun PresetChip(
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(bg)
-            .border(1.dp, border, RoundedCornerShape(12.dp))
+            .border(1.dp, border, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(
-            imageVector = getPresetIcon(preset.id, preset.isCustom),
-            contentDescription = null,
-            tint = textColor,
-            modifier = Modifier.size(14.dp)
-        )
+        if (isActive) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(13.dp),
+                strokeWidth = 2.dp,
+                color = textColor
+            )
+        } else {
+            Icon(
+                imageVector = getPresetIcon(preset.id, preset.isCustom),
+                contentDescription = null,
+                tint = textColor,
+                modifier = Modifier.size(15.dp)
+            )
+        }
 
         Text(
             text = preset.name,
-            fontSize = 12.sp,
+            fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
             color = textColor
         )
@@ -185,12 +208,12 @@ private fun PresetChip(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.25f) else FuchsiaAccent.copy(alpha = 0.15f))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                    .background(if (isDarkTheme) FuchsiaAccent.copy(alpha = 0.25f) else FuchsiaAccent.copy(alpha = 0.18f))
+                    .padding(horizontal = 4.dp, vertical = 1.dp)
             ) {
                 Text(
                     text = "CUSTOM",
-                    fontSize = 8.sp,
+                    fontSize = 7.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = textColor
                 )
@@ -203,12 +226,12 @@ private fun getPresetIcon(id: String, isCustom: Boolean): ImageVector {
     if (isCustom) return Icons.Default.Tune
     return when (id) {
         "improve" -> Icons.Default.AutoFixHigh
-        "professional" -> Icons.Default.Work
+        "professional" -> Icons.Default.WorkOutline
         "casual" -> Icons.AutoMirrored.Default.Chat
         "summarize" -> Icons.Default.Compress
         "bullet" -> Icons.Default.FormatListBulleted
-        "expand" -> Icons.Default.OpenWith
-        "sarcastic" -> Icons.Default.Face
+        "expand" -> Icons.Default.OpenInFull
+        "sarcastic" -> Icons.Default.Mood
         "prompt" -> Icons.Default.SmartToy
         else -> Icons.Default.AutoFixHigh
     }

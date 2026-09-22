@@ -7,6 +7,8 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -87,6 +89,12 @@ fun VerbatimScreen(
             return
         }
 
+        if (settings.geminiApiKey.isBlank()) {
+            Toast.makeText(context, "Please set your Gemini API Key in Settings first!", Toast.LENGTH_LONG).show()
+            showSettingsDialog = true
+            return
+        }
+
         isLoading = true
         activePresetName = preset.name
         if (!isTabletOrLandscape) {
@@ -116,7 +124,26 @@ fun VerbatimScreen(
         }
     }
 
+    // Helper: Native Share Sheet
+    fun shareText(text: String) {
+        try {
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, text)
+                type = "text/plain"
+            }
+            val shareIntent = Intent.createChooser(sendIntent, "Share text via")
+            context.startActivity(shareIntent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Share failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Sample Text for 1-Tap Demo
+    val sampleText = "Verbatim Studio is an intelligent writing companion. It automatically corrects grammatical mistakes, refines formal professional communications, summarizes dense documentation, and creates structured prompts for large language models."
+
     val screenBg = if (settings.isDarkTheme) BackgroundDark else BackgroundLight
+    val hasValidOutput = outputText.isNotBlank() && outputText != "Result will appear here..."
 
     Scaffold(
         containerColor = screenBg,
@@ -126,6 +153,7 @@ fun VerbatimScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .imePadding()
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -145,6 +173,8 @@ fun VerbatimScreen(
                 builtInPresets = PresetDefaults.builtInPresets,
                 customPresets = customPresets,
                 isDarkTheme = settings.isDarkTheme,
+                activePresetName = activePresetName,
+                isLoading = isLoading,
                 onSelectPreset = { executePreset(it) }
             )
 
@@ -157,7 +187,9 @@ fun VerbatimScreen(
                     SlidingTabBar(
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
-                        isDarkTheme = settings.isDarkTheme
+                        isDarkTheme = settings.isDarkTheme,
+                        hasOutput = hasValidOutput,
+                        isLoading = isLoading
                     )
                 }
             }
@@ -169,17 +201,14 @@ fun VerbatimScreen(
                     .fillMaxWidth()
             ) {
                 if (isTabletOrLandscape) {
-                    // Side-by-side view
+                    // Side-by-side view on Tablets / Landscape
                     Row(
                         modifier = Modifier.fillMaxSize(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         InputPanel(
                             text = inputText,
-                            onTextChanged = {
-                                inputText = it
-                                if (outputText.isEmpty()) outputText = it
-                            },
+                            onTextChanged = { inputText = it },
                             onPaste = {
                                 val clip = clipboard.primaryClip
                                 if (clip != null && clip.itemCount > 0) {
@@ -190,7 +219,9 @@ fun VerbatimScreen(
                             },
                             onClear = {
                                 inputText = ""
-                                outputText = ""
+                            },
+                            onSampleText = {
+                                inputText = sampleText
                             },
                             isDarkTheme = settings.isDarkTheme,
                             modifier = Modifier.weight(1f)
@@ -215,57 +246,86 @@ fun VerbatimScreen(
                                     Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
                                 }
                             },
+                            onUseAsInput = {
+                                inputText = outputText
+                                Toast.makeText(context, "Output transferred to input!", Toast.LENGTH_SHORT).show()
+                            },
+                            onShare = {
+                                shareText(outputText)
+                            },
                             isDarkTheme = settings.isDarkTheme,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 } else {
-                    // Single active panel based on selectedTab
-                    if (selectedTab == 0) {
-                        InputPanel(
-                            text = inputText,
-                            onTextChanged = {
-                                inputText = it
-                                if (outputText.isEmpty()) outputText = it
-                            },
-                            onPaste = {
-                                val clip = clipboard.primaryClip
-                                if (clip != null && clip.itemCount > 0) {
-                                    val pasteText = clip.getItemAt(0).coerceToText(context).toString()
-                                    inputText = pasteText
-                                    Toast.makeText(context, "Pasted from clipboard!", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            onClear = {
-                                inputText = ""
-                                outputText = ""
-                            },
-                            isDarkTheme = settings.isDarkTheme,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        OutputPanel(
-                            rawInputText = inputText,
-                            rawOutputText = outputText,
-                            activePresetName = activePresetName,
-                            isLoading = isLoading,
-                            isSpeaking = isSpeaking,
-                            showDiff = showDiff,
-                            onToggleDiff = { showDiff = !showDiff },
-                            onToggleSpeak = {
-                                if (outputText.isNotBlank() && outputText != "Result will appear here...") {
-                                    ttsManager.toggleSpeak(outputText)
-                                }
-                            },
-                            onCopy = {
-                                if (outputText.isNotBlank()) {
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Verbatim Enhanced", outputText))
-                                    Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            isDarkTheme = settings.isDarkTheme,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    // Animated Tab Content on Phones
+                    AnimatedContent(
+                        targetState = selectedTab,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                (slideInHorizontally { width -> width / 3 } + fadeIn(animationSpec = tween(220)))
+                                    .togetherWith(slideOutHorizontally { width -> -width / 3 } + fadeOut(animationSpec = tween(180)))
+                            } else {
+                                (slideInHorizontally { width -> -width / 3 } + fadeIn(animationSpec = tween(220)))
+                                    .togetherWith(slideOutHorizontally { width -> width / 3 } + fadeOut(animationSpec = tween(180)))
+                            }
+                        },
+                        label = "tab_content_anim",
+                        modifier = Modifier.fillMaxSize()
+                    ) { tabIndex ->
+                        if (tabIndex == 0) {
+                            InputPanel(
+                                text = inputText,
+                                onTextChanged = { inputText = it },
+                                onPaste = {
+                                    val clip = clipboard.primaryClip
+                                    if (clip != null && clip.itemCount > 0) {
+                                        val pasteText = clip.getItemAt(0).coerceToText(context).toString()
+                                        inputText = pasteText
+                                        Toast.makeText(context, "Pasted from clipboard!", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onClear = {
+                                    inputText = ""
+                                },
+                                onSampleText = {
+                                    inputText = sampleText
+                                },
+                                isDarkTheme = settings.isDarkTheme,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            OutputPanel(
+                                rawInputText = inputText,
+                                rawOutputText = outputText,
+                                activePresetName = activePresetName,
+                                isLoading = isLoading,
+                                isSpeaking = isSpeaking,
+                                showDiff = showDiff,
+                                onToggleDiff = { showDiff = !showDiff },
+                                onToggleSpeak = {
+                                    if (outputText.isNotBlank() && outputText != "Result will appear here...") {
+                                        ttsManager.toggleSpeak(outputText)
+                                    }
+                                },
+                                onCopy = {
+                                    if (outputText.isNotBlank()) {
+                                        clipboard.setPrimaryClip(ClipData.newPlainText("Verbatim Enhanced", outputText))
+                                        Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onUseAsInput = {
+                                    inputText = outputText
+                                    selectedTab = 0
+                                    Toast.makeText(context, "Output transferred to input!", Toast.LENGTH_SHORT).show()
+                                },
+                                onShare = {
+                                    shareText(outputText)
+                                },
+                                isDarkTheme = settings.isDarkTheme,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
